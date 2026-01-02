@@ -1,0 +1,155 @@
+{
+  "name": "Skillytics - Learn by Doing",
+  "short_name": "Skillytics",
+  "description": "Master programming through interactive missions. No videos, just real coding practice.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "productivity", "developer-tools"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your learning progress and current mission",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Missions",
+      "short_name": "Missions",
+      "description": "Browse and start interactive coding missions",
+      "url": "/mission",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "short_name": "Projects",
+      "description": "View and manage your coding projects",
+      "url": "/project",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Scenarios",
+      "short_name": "Scenarios",
+      "description": "Practice real-world developer scenarios",
+      "url": "/scenario",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Git Simulator",
+      "short_name": "Git",
+      "description: "Learn Git through visual simulation",
+      "url": "/git-simulator",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Architecture",
+      "short_name": "Architecture",
+      "description: "Visualize system architectures",
+      "url": "/architecture",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Analyzer",
+      "short_name": "Analyzer",
+      "description: "Analyze code for security and performance",
+      "url": "/analyzer",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Testing",
+      "short_name": "Testing",
+      "description: "Practice testing methodologies",
+      "url": "/testing-simulator",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Career",
+      "short_name": "Career",
+      "description: "Build your professional profile",
+      "url": "/career",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Analytics",
+      "description: "View your learning analytics",
+      "url": "/analytics",
+      "icons": [
+        {
+          "src": "/icon-2024x202.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

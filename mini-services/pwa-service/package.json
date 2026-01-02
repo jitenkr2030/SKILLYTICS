@@ -1,0 +1,22 @@
+{
+  "name": "pwa-service",
+  "version": "1.0.0",
+  "description": "PWA service for Skillytics platform",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-cron": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.5",
+    "@types/node-cron": "^3.0.2",
+    "bun-types": "latest"
+  }
+}

@@ -1,0 +1,495 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String?  // For credentials auth
+  avatar        String?
+  role          String   @default("USER") // USER, INSTRUCTOR, ADMIN
+  bio           String?
+  isPremium     Boolean  @default(false)
+  level         Int      @default(1)
+  xp            Int      @default(0)
+  streak        Int      @default(0)
+  totalMissions Int      @default(0)
+  completedMissions Int  @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  progress      UserProgress[]
+  missionAttempts MissionAttempt[]
+  hints         UserHint[]
+  achievements  UserAchievement[]
+  projectProgress UserProjectProgress[]
+  careerProfile CareerProfile?
+  accounts      Account[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  purchases     Purchase[]
+  certificates  UserCertificate[]
+  careerServices CareerService[]
+
+  @@map("users")
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  order       Int
+  isUnlocked  Boolean  @default(false)
+  icon        String?
+  color       String?
+  estimatedHours Int @default(0)
+  
+  // Relations
+  lessons     Lesson[]
+  prerequisites ModulePrerequisite[] @relation("ModulePrerequisite")
+  dependents   ModulePrerequisite[] @relation("ModuleDependent")
+
+  @@map("modules")
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String   // JSON content for the lesson
+  order       Int
+  moduleId    String
+  difficulty  String   @default("beginner") // beginner, intermediate, advanced
+  estimatedMinutes Int @default(30)
+  isPublished Boolean  @default(false)
+  
+  // Relations
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  missions    Mission[]
+  prerequisites LessonPrerequisite[] @relation("LessonPrerequisite")
+  dependents   LessonPrerequisite[] @relation("LessonDependent")
+
+  @@map("lessons")
+}
+
+model Mission {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  instructions    String   // What the user needs to do
+  starterCode     String?  // Initial broken code
+  solutionCode    String?  // Working solution
+  validationRules String   // JSON rules for validation
+  hints           String   // JSON array of hints
+  lessonId        String
+  order           Int
+  difficulty      String   @default("beginner")
+  points          Int      @default(10)
+  timeLimit       Int?     // Minutes
+  isPublished     Boolean  @default(false)
+  
+  // Relations
+  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts        MissionAttempt[]
+  tags            MissionTag[]
+
+  @@map("missions")
+}
+
+model MissionAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  missionId    String
+  code         String
+  status       String   // "in_progress", "completed", "failed"
+  score        Int?
+  timeSpent    Int      // Seconds
+  attempts     Int      @default(1)
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission      Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@map("mission_attempts")
+}
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  moduleId    String
+  lessonId    String?
+  status      String   // "not_started", "in_progress", "completed"
+  progress    Float    @default(0) // 0-100 percentage
+  timeSpent   Int      @default(0) // Seconds
+  lastAccessed DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId, lessonId])
+  @@map("user_progress")
+}
+
+model Hint {
+  id          String   @id @default(cuid())
+  missionId   String
+  level       Int      // 1-4 hint levels
+  content     String
+  pointsCost  Int      @default(5)
+  
+  // Relations
+  missionHints UserHint[]
+
+  @@map("hints")
+}
+
+model UserHint {
+  id          String   @id @default(cuid())
+  userId      String
+  hintId      String
+  usedAt      DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hint        Hint     @relation(fields: [hintId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hintId])
+  @@map("user_hints")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  points      Int
+  condition   String   // JSON condition to unlock
+  
+  // Relations
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model MiniProject {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  moduleId    String
+  missions    String   // JSON array of mission IDs
+  finalCode   String?  // Complete working solution
+  previewUrl  String?
+  difficulty  String   @default("intermediate")
+  estimatedHours Int @default(2)
+  
+  // Relations
+  progress    UserProjectProgress[]
+
+  @@map("mini_projects")
+}
+
+model UserProjectProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  projectId     String
+  status        String   // "not_started", "in_progress", "completed"
+  currentMission Int?
+  completedMissions String // JSON array of completed mission IDs
+  finalCode     String?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       MiniProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("user_project_progress")
+}
+
+model CareerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  resume          String?  // JSON resume data
+  portfolio       String?  // JSON portfolio data
+  githubProfile   String?
+  linkedinProfile String?
+  careerGoals     String?
+  skills          String?  // JSON array of skills
+  experienceLevel String   @default("beginner")
+  jobPreferences  String?  // JSON job preferences
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("career_profiles")
+}
+
+// Prerequisite relationships
+model ModulePrerequisite {
+  moduleId         String
+  prerequisiteId   String
+  
+  module           Module @relation("ModulePrerequisite", fields: [moduleId], references: [id], onDelete: Cascade)
+  prerequisite     Module @relation("ModuleDependent", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([moduleId, prerequisiteId])
+  @@map("module_prerequisites")
+}
+
+model LessonPrerequisite {
+  lessonId         String
+  prerequisiteId   String
+  
+  lesson           Lesson @relation("LessonPrerequisite", fields: [lessonId], references: [id], onDelete: Cascade)
+  prerequisite     Lesson @relation("LessonDependent", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, prerequisiteId])
+  @@map("lesson_prerequisites")
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  
+  // Relations
+  missions MissionTag[]
+
+  @@map("tags")
+}
+
+model MissionTag {
+  missionId String
+  tagId     String
+  
+  mission   Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([missionId, tagId])
+  @@map("mission_tags")
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Subscription and Payment Models
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String
+  stripeCustomerId  String   @unique
+  stripeSubscriptionId String @unique
+  plan              String   // "free", "premium", "pro", "enterprise"
+  status            String   // "active", "canceled", "past_due", "unpaid"
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  userId          String
+  stripePaymentId String   @unique
+  type            String   // "career_service", "certificate"
+  itemType        String   // "resume_review", "interview_prep", "career_coaching", "html_cert", etc.
+  amount          Int      // Amount in cents
+  currency        String   @default("USD")
+  status          String   // "pending", "completed", "failed", "refunded"
+  metadata        String?  // JSON metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("purchases")
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  type            String   // "html", "css", "javascript", "react", "fullstack"
+  price           Int      // Price in cents
+  requirements    String   // JSON requirements
+  validityMonths  Int      @default(12) // Certificate validity in months
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  userCertificates UserCertificate[]
+
+  @@map("certificates")
+}
+
+model UserCertificate {
+  id            String   @id @default(cuid())
+  userId        String
+  certificateId String
+  purchaseId    String?
+  issuedAt      DateTime @default(now())
+  expiresAt     DateTime
+  certificateUrl String? // URL to certificate PDF/image
+  verificationCode String @unique
+  score         Int?     // Final score
+  metadata      String?  // JSON metadata
+
+  // Relations
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, certificateId])
+  @@map("user_certificates")
+}
+
+model CareerService {
+  id              String   @id @default(cuid())
+  userId          String
+  type            String   // "resume_review", "interview_prep", "career_coaching"
+  purchaseId      String?
+  status          String   // "pending", "in_progress", "completed", "cancelled"
+  scheduledAt     DateTime?
+  completedAt     DateTime?
+  notes           String?  // Service notes and feedback
+  deliverables    String?  // JSON deliverables
+  metadata        String?  // JSON metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("career_services")
+}
+
+model Enterprise {
+  id              String   @id @default(cuid())
+  name            String
+  domain          String   @unique
+  stripeCustomerId String  @unique
+  maxUsers        Int
+  currentUsers    Int      @default(0)
+  plan            String   // "enterprise"
+  status          String   // "active", "canceled", "past_due"
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  settings        String?  // JSON settings
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  teams           EnterpriseTeam[]
+
+  @@map("enterprises")
+}
+
+model EnterpriseTeam {
+  id              String   @id @default(cuid())
+  enterpriseId    String
+  name            String
+  managerId       String   // User ID of team manager
+  maxMembers      Int
+  currentMembers  Int      @default(0)
+  settings        String?  // JSON team settings
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  enterprise      Enterprise @relation(fields: [enterpriseId], references: [id], onDelete: Cascade)
+  members         EnterpriseTeamMember[]
+
+  @@map("enterprise_teams")
+}
+
+model EnterpriseTeamMember {
+  id              String   @id @default(cuid())
+  teamId          String
+  userId          String
+  role            String   @default("member") // "member", "manager"
+  joinedAt        DateTime @default(now())
+  settings        String?  // JSON member settings
+
+  // Relations
+  team            EnterpriseTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("enterprise_team_members")
+}
