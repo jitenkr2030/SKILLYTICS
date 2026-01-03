@@ -1,12 +1,11 @@
-import { loadStripe } from '@stripe/stripe-js'
+import Stripe from 'stripe'
 
-export const getStripe = () => {
-  if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
-    throw new Error('Stripe publishable key is not set')
-  }
-  
-  return loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-}
+// Initialize Stripe with the secret key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-12-18.acacia',
+})
+
+export { stripe }
 
 export const formatPrice = (amount: number, currency: string = 'USD') => {
   return new Intl.NumberFormat('en-US', {

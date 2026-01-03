@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { llm } from 'z-ai-web-dev-sdk'
+import zAI from 'z-ai-web-dev-sdk'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const context = createMentorContext(mission, userLevel, hintsUsed)
     
     // Generate mentor response using LLM
-    const response = await llm.chat({
+    const response = await zAI.chat({
       messages: [
         {
           role: 'system',
