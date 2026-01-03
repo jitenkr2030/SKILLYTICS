@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import zAI from 'z-ai-web-dev-sdk'
+import { zAI } from '@/lib/ai'
 
 export async function POST(request: NextRequest) {
   try {
