@@ -895,6 +895,9 @@
 # uploads/
 # downloads/
 
+# SKILLYTICS folder (duplicate copy of the main project)
+SKILLYTICS/
+
 # Claude Agent SDK debug files
 **/.claude/debug/
 **/.claude/debug/**
