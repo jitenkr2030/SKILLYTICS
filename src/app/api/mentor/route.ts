@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { zAI } from '@/lib/ai'
+import zAI from 'z-ai-web-dev-sdk'
+
+// Initialize the AI SDK with API key from environment variables
+// The SDK requires authentication credentials at import time
+try {
+  if (process.env.Z_AI_API_KEY) {
+    zAI.init({
+      apiKey: process.env.Z_AI_API_KEY
+    })
+  } else if (process.env.AI_API_KEY) {
+    zAI.init({
+      apiKey: process.env.AI_API_KEY
+    })
+  }
+} catch (initializationError) {
+  // Silently fail initialization - errors will occur at runtime if SDK is used without credentials
+  console.warn('AI SDK initialization skipped - no API key provided')
+}
 
 export async function POST(request: NextRequest) {
   try {
