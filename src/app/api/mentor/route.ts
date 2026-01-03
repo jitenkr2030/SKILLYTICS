@@ -15,61 +15,11 @@ export async function POST(request: NextRequest) {
     // Create context for the AI mentor
     const context = createMentorContext(mission, userLevel, hintsUsed)
     
-    // Try to generate mentor response using LLM
-    let response: { content: string } | null = null
-    
-    try {
-      // Dynamic import to defer SDK loading until runtime
-      const zAI = (await import('z-ai-web-dev-sdk')).default
-      
-      // Initialize with API key if available
-      const apiKey = process.env.Z_AI_API_KEY || process.env.AI_API_KEY
-      if (apiKey) {
-        zAI.init({ apiKey })
-      }
-      
-      // Generate response
-      response = await zAI.chat({
-        messages: [
-          {
-            role: 'system',
-            content: `${context}
-
-You are an expert programming mentor helping a student learn by doing. Your role is to:
-1. Analyze their code carefully
-2. Give hints, not direct answers
-3. Explain concepts in simple terms
-4. Encourage problem-solving thinking
-5. Be supportive and motivating
-
-Always respond with helpful guidance that moves them closer to the solution without giving it away completely.`
-          },
-          {
-            role: 'user',
-            content: `Here's my current code:
-
-\`\`\`
-${code}
-\`\`\`
-
-${question ? `My question is: ${question}` : 'Can you give me a hint about what I should try next?'}
-
-Please help me understand what's wrong and what approach I should take.`
-          }
-        ],
-        temperature: 0.7,
-        maxTokens: 500
-      })
-    } catch (sdkError) {
-      console.warn('AI SDK not available or not configured:', sdkError)
-      // Provide fallback response when SDK is not available
-      response = {
-        content: generateFallbackResponse(code, mission)
-      }
-    }
+    // Generate a helpful response based on the context and code
+    const response = generateMentorResponse(context, code, mission, question)
 
     return NextResponse.json({
-      response: response.content,
+      response,
       suggestions: generateCodeSuggestions(code, mission),
       timestamp: new Date().toISOString()
     })
@@ -84,56 +34,88 @@ Please help me understand what's wrong and what approach I should take.`
 }
 
 function createMentorContext(mission: any, userLevel: number, hintsUsed: number) {
-  return `
-Mission Context:
-- Title: ${mission.title}
-- Difficulty: ${mission.difficulty}
-- Description: ${mission.description}
-- Instructions: ${mission.instructions}
-
-Student Context:
-- Level: ${userLevel}
-- Hints used: ${hintsUsed}
-
-Learning Objectives:
-${mission.instructions || 'Complete the programming challenge successfully'}
-
-Teaching Approach:
-- If user is beginner (level 1-3): Be very explicit, explain concepts step by step
-- If user is intermediate (level 4-7): Assume some knowledge, focus on problem-solving strategies  
-- If user is advanced (level 8+): Give high-level guidance, focus on best practices and optimization
-- If many hints used: Be more encouraging, break down problem into smaller steps
-`
+  return {
+    title: mission?.title || 'Unknown Mission',
+    difficulty: mission?.difficulty || 'beginner',
+    description: mission?.description || '',
+    instructions: mission?.instructions || '',
+    userLevel,
+    hintsUsed
+  }
 }
 
-function generateFallbackResponse(code: string, mission: any): string {
-  // Generate a helpful fallback response when AI is not available
-  return `I'm here to help you with this programming challenge! 
-
-While the AI mentor is temporarily unavailable, here are some general tips:
-
-1. **Read the instructions carefully** - Make sure you understand what the mission is asking you to do.
-
-2. **Break down the problem** - Split the task into smaller, manageable steps.
-
-3. **Check your syntax** - Look for any typos or missing characters in your code.
-
-4. **Use console.log** - Debug your code by logging intermediate values.
-
-5. **Don't give up!** - Programming is about solving problems step by step.
-
-If you continue to have trouble, please check back later when the AI mentor service is fully available.`
+function generateMentorResponse(context: any, code: string, mission: any, question: string | undefined): string {
+  // Generate contextual response based on mission type and code analysis
+  const missionType = context.instructions?.toLowerCase() || ''
+  
+  // Analyze code for common issues
+  const hasIfStatement = code.includes('if ')
+  const hasElseStatement = code.includes('else')
+  const hasFunction = code.includes('function') || code.includes('const ') || code.includes('let ')
+  const hasConsoleLog = code.includes('console.log')
+  
+  let response = ''
+  
+  if (question) {
+    response = `Great question! Let me help you with that.\n\n`
+  } else {
+    response = `I see you're working on "${context.title}" - a ${context.difficulty} level mission. `
+  }
+  
+  // Provide mission-specific guidance
+  if (missionType.includes('toggle') || missionType.includes('hide') || missionType.includes('show')) {
+    response += `For this visibility toggle challenge, remember:\n`
+    response += `• You need to check the current state before changing it\n`
+    response += `• Use conditional statements (if/else) to handle both states\n`
+    response += `• The style.display property can show/hide elements\n\n`
+    
+    if (!hasIfStatement) {
+      response += `💡 **Tip**: Your code doesn't have an if statement yet. Consider adding one to check the current visibility state.\n\n`
+    }
+  } else if (missionType.includes('button') || missionType.includes('click')) {
+    response += `For button interaction challenges:\n`
+    response += `• Make sure elements exist before trying to interact with them\n`
+    response += `• Event listeners can be added with addEventListener\n\n`
+  } else if (missionType.includes('loop') || missionType.includes('array') || missionType.includes('list')) {
+    response += `For data iteration challenges:\n`
+    response += `• Consider using loops (for, while) or array methods (map, forEach)\n`
+    response += `• Make sure you're accessing the correct array elements\n\n`
+  } else {
+    response += `Here are some general programming tips:\n`
+    response += `• Break the problem into smaller steps\n`
+    response += `• Use console.log to debug and see intermediate values\n`
+    response += `• Check your syntax carefully for typos\n\n`
+  }
+  
+  // Add code-specific feedback
+  if (hasConsoleLog) {
+    response += `👍 I see you're using console.log for debugging - that's a great practice!\n\n`
+  }
+  
+  if (hasFunction && !hasIfStatement && !hasElseStatement) {
+    response += `💡 **Tip**: Consider breaking your code into functions if you haven't already. Functions help organize logic and make it reusable.\n\n`
+  }
+  
+  // Add user-level appropriate guidance
+  if (context.userLevel <= 3) {
+    response += `Since you're still building your fundamentals, don't worry about being perfect. Focus on understanding the concepts one step at a time!`
+  } else if (context.userLevel >= 7) {
+    response += `At your level, you're ready to think about best practices like code organization, error handling, and edge cases.`
+  }
+  
+  return response
 }
 
 function generateCodeSuggestions(code: string, mission: any) {
   const suggestions = []
+  const instructions = mission?.instructions?.toLowerCase() || ''
   
   // Analyze common patterns and suggest improvements
-  if (!code.includes('if') && mission.instructions?.includes('toggle')) {
+  if (!code.includes('if') && (instructions.includes('toggle') || instructions.includes('check') || instructions.includes('condition'))) {
     suggestions.push({
       type: 'concept',
       title: 'Conditional Logic',
-      description: 'Consider using an if statement to check the current state'
+      description: 'Consider using an if statement to check the current state before making changes'
     })
   }
 
@@ -141,7 +123,7 @@ function generateCodeSuggestions(code: string, mission: any) {
     suggestions.push({
       type: 'property',
       title: 'CSS Display Property',
-      description: 'You can check and modify element visibility using the style.display property'
+      description: 'You can check and modify element visibility using the style.display property (none vs block)'
     })
   }
 
@@ -149,7 +131,15 @@ function generateCodeSuggestions(code: string, mission: any) {
     suggestions.push({
       type: 'debugging',
       title: 'Debugging Tip',
-      description: 'Great use of console.log! Try logging the element\'s current display state'
+      description: 'Great use of console.log! Try logging the element\'s current display state to understand what\'s happening'
+    })
+  }
+  
+  if (!code.includes('addEventListener') && (instructions.includes('click') || instructions.includes('button'))) {
+    suggestions.push({
+      type: 'event',
+      title: 'Event Handling',
+      description: 'You may need to add an event listener to handle user interactions like clicks'
     })
   }
 
