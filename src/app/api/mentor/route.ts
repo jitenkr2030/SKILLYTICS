@@ -1,22 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import zAI from 'z-ai-web-dev-sdk'
-
-// Initialize the AI SDK with API key from environment variables
-// The SDK requires authentication credentials at import time
-try {
-  if (process.env.Z_AI_API_KEY) {
-    zAI.init({
-      apiKey: process.env.Z_AI_API_KEY
-    })
-  } else if (process.env.AI_API_KEY) {
-    zAI.init({
-      apiKey: process.env.AI_API_KEY
-    })
-  }
-} catch (initializationError) {
-  // Silently fail initialization - errors will occur at runtime if SDK is used without credentials
-  console.warn('AI SDK initialization skipped - no API key provided')
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,12 +15,25 @@ export async function POST(request: NextRequest) {
     // Create context for the AI mentor
     const context = createMentorContext(mission, userLevel, hintsUsed)
     
-    // Generate mentor response using LLM
-    const response = await zAI.chat({
-      messages: [
-        {
-          role: 'system',
-          content: `${context}
+    // Try to generate mentor response using LLM
+    let response: { content: string } | null = null
+    
+    try {
+      // Dynamic import to defer SDK loading until runtime
+      const zAI = (await import('z-ai-web-dev-sdk')).default
+      
+      // Initialize with API key if available
+      const apiKey = process.env.Z_AI_API_KEY || process.env.AI_API_KEY
+      if (apiKey) {
+        zAI.init({ apiKey })
+      }
+      
+      // Generate response
+      response = await zAI.chat({
+        messages: [
+          {
+            role: 'system',
+            content: `${context}
 
 You are an expert programming mentor helping a student learn by doing. Your role is to:
 1. Analyze their code carefully
@@ -48,10 +43,10 @@ You are an expert programming mentor helping a student learn by doing. Your role
 5. Be supportive and motivating
 
 Always respond with helpful guidance that moves them closer to the solution without giving it away completely.`
-        },
-        {
-          role: 'user',
-          content: `Here's my current code:
+          },
+          {
+            role: 'user',
+            content: `Here's my current code:
 
 \`\`\`
 ${code}
@@ -60,11 +55,18 @@ ${code}
 ${question ? `My question is: ${question}` : 'Can you give me a hint about what I should try next?'}
 
 Please help me understand what's wrong and what approach I should take.`
-        }
-      ],
-      temperature: 0.7,
-      maxTokens: 500
-    })
+          }
+        ],
+        temperature: 0.7,
+        maxTokens: 500
+      })
+    } catch (sdkError) {
+      console.warn('AI SDK not available or not configured:', sdkError)
+      // Provide fallback response when SDK is not available
+      response = {
+        content: generateFallbackResponse(code, mission)
+      }
+    }
 
     return NextResponse.json({
       response: response.content,
@@ -104,11 +106,30 @@ Teaching Approach:
 `
 }
 
+function generateFallbackResponse(code: string, mission: any): string {
+  // Generate a helpful fallback response when AI is not available
+  return `I'm here to help you with this programming challenge! 
+
+While the AI mentor is temporarily unavailable, here are some general tips:
+
+1. **Read the instructions carefully** - Make sure you understand what the mission is asking you to do.
+
+2. **Break down the problem** - Split the task into smaller, manageable steps.
+
+3. **Check your syntax** - Look for any typos or missing characters in your code.
+
+4. **Use console.log** - Debug your code by logging intermediate values.
+
+5. **Don't give up!** - Programming is about solving problems step by step.
+
+If you continue to have trouble, please check back later when the AI mentor service is fully available.`
+}
+
 function generateCodeSuggestions(code: string, mission: any) {
   const suggestions = []
   
   // Analyze common patterns and suggest improvements
-  if (!code.includes('if') && mission.instructions.includes('toggle')) {
+  if (!code.includes('if') && mission.instructions?.includes('toggle')) {
     suggestions.push({
       type: 'concept',
       title: 'Conditional Logic',
