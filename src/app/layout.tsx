@@ -1,0 +1,56 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "@/components/providers";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Skillytics - Learn by Doing",
+  description: "Master programming through interactive missions. No videos, just real coding practice.",
+  keywords: ["Skillytics", "programming", "coding", "learn", "missions", "interactive"],
+  authors: [{ name: "Skillytics Team" }],
+  icons: {
+    icon: "/logo.svg",
+  },
+  openGraph: {
+    title: "Skillytics - Learn by Doing",
+    description: "Master programming through interactive missions. No videos, just real coding practice.",
+    url: "https://skillytics.com",
+    siteName: "Skillytics",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Skillytics - Learn by Doing",
+    description: "Master programming through interactive missions. No videos, just real coding practice.",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+      >
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
+      </body>
+    </html>
+  );
+}
