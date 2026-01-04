@@ -9,32 +9,25 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   
-  // Block the problematic SDK at the bundler level by creating an alias
+  // Explicitly configure turbopack to allow webpack config to work alongside it
+  turbopack: {
+    rules: {
+      // Route TypeScript and JavaScript files through webpack for SDK blocking
+      '*.ts': ['webpack'],
+      '*.tsx': ['webpack'],
+      '*.js': ['webpack'],
+      '*.jsx': ['webpack'],
+    },
+  },
+  
+  // Block the problematic SDK at the webpack bundler level
   // This ensures that even if the SDK is pulled in as a transitive dependency,
   // any imports will be redirected to our stub implementation
   webpack: (config, { isServer }) => {
-    // Create a stub module content that doesn't require API keys
-    const stubModuleContent = `
-      // Stub module to replace z-ai-web-dev-sdk
-      // This prevents build failures caused by the real SDK requiring API keys during module evaluation
-      module.exports = {
-        default: {
-          configure: () => {},
-          chat: () => Promise.resolve({ text: 'Stub response' }),
-          generateCode: () => Promise.resolve('// Stub code'),
-          analyzeCode: () => Promise.resolve({ issues: [], suggestions: [], score: 100 })
-        },
-        configure: () => {},
-        chat: () => Promise.resolve({ text: 'Stub response' }),
-        generateCode: () => Promise.resolve('// Stub code'),
-        analyzeCode: () => Promise.resolve({ issues: [], suggestions: [], score: 100 })
-      };
-    `;
-
     // Add webpack aliases to redirect SDK imports to stub
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Block the SDK by aliasing it to a non-existent path or our stub
+      // Block the SDK by aliasing it to our stub
       'z-ai-web-dev-sdk': path.resolve(__dirname, 'src/lib/zai-stub.ts'),
       'zAI': path.resolve(__dirname, 'src/lib/zai-stub.ts'),
     };
