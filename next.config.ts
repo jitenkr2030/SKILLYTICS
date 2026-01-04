@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   
+  // Empty turbopack config to silence warning about webpack config without turbopack
+  // This allows webpack config to work alongside Turbopack for SDK blocking
+  turbopack: {},
+  
   // Block the problematic SDK at the webpack bundler level
   // This ensures that even if the SDK is pulled in as a transitive dependency,
   // any imports will be redirected to our stub implementation
