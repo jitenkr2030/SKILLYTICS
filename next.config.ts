@@ -9,17 +9,6 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   
-  // Explicitly configure turbopack to allow webpack config to work alongside it
-  turbopack: {
-    rules: {
-      // Route TypeScript and JavaScript files through webpack for SDK blocking
-      '*.ts': ['webpack'],
-      '*.tsx': ['webpack'],
-      '*.js': ['webpack'],
-      '*.jsx': ['webpack'],
-    },
-  },
-  
   // Block the problematic SDK at the webpack bundler level
   // This ensures that even if the SDK is pulled in as a transitive dependency,
   // any imports will be redirected to our stub implementation
