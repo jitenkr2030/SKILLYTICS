@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+// Import our stub to prevent any accidental import of the real SDK
+import '@/lib/zai-stub'
 
 export async function POST(request: NextRequest) {
   try {

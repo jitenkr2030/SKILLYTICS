@@ -18,7 +18,9 @@
 **/downloads/
 **/eggs/
 **/.eggs/
-**/lib/
+!**/src/lib/
+!src/lib/
+**/lib64/
 **/lib64/
 **/parts/
 **/sdist/

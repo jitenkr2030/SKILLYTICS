@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/lib/sdk-config"; // Load SDK stub configuration early
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers";
 
