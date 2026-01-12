@@ -9,9 +9,12 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   
-  // Webpack configuration for SDK blocking
-  // Note: Turbopack doesn't use webpack aliases, so this may not work in Turbopack builds
-  // For Turbopack, we'll need to find an alternative solution
+  // Empty turbopack config to silence warning about webpack config without turbopack
+  // This allows webpack config to work alongside Turbopack for SDK blocking
+  turbopack: {},
+  
+  // Webpack configuration for SDK blocking (if webpack is used)
+  // Note: Turbopack is the default in Next.js 16, but webpack config is kept for compatibility
   webpack: (config, { isServer }) => {
     // Add webpack aliases to redirect SDK imports to stub
     config.resolve.alias = {
