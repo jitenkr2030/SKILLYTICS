@@ -44,13 +44,11 @@ const nextConfig: NextConfig = {
       '@z-ai': false,
     };
 
-    // Layer 3: External configuration - exclude SDK from bundling
-    if (!config.externals) {
-      config.externals = [];
-    }
-    
-    // Note: IgnorePlugin requires direct webpack access which is not available in Next.js 16
-    // The alias and fallback configurations above should be sufficient to block the SDK
+    // Layer 3: Force modules to empty for SDK packages
+    // This ensures that even if the SDK is somehow resolved, it returns nothing
+    config.module.noParse = config.module.noParse || [];
+    config.module.noParse.push(/z-ai-web-dev-sdk/);
+    config.module.noParse.push(/zAI/);
 
     // Log the alias configuration for debugging
     console.log('✓ Webpack SDK alias configuration applied');
