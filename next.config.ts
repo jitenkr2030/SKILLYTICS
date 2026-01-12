@@ -9,13 +9,21 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   
-  // Empty turbopack config to silence warning about webpack config without turbopack
-  // This allows webpack config to work alongside Turbopack for SDK blocking
-  turbopack: {},
+  // Turbopack configuration to block the SDK at the bundler level
+  // This is necessary because Turbopack doesn't use webpack aliases
+  turbopack: {
+    resolve: {
+      // Add aliases to redirect SDK imports to our stub
+      aliases: {
+        // Block the SDK by aliasing it to our stub
+        'z-ai-web-dev-sdk': path.resolve(__dirname, 'src/lib/zai-stub.ts'),
+        'zAI': path.resolve(__dirname, 'src/lib/zai-stub.ts'),
+      },
+    },
+  },
   
-  // Block the problematic SDK at the webpack bundler level
-  // This ensures that even if the SDK is pulled in as a transitive dependency,
-  // any imports will be redirected to our stub implementation
+  // Keep webpack config as fallback for non-Turbopack builds
+  // This ensures SDK blocking works in both Turbopack and webpack builds
   webpack: (config, { isServer }) => {
     // Add webpack aliases to redirect SDK imports to stub
     config.resolve.alias = {
