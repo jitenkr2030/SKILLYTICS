@@ -72,6 +72,3 @@ export const initZAI = (config: AIConfig) => {
 export const chat = (message: string, context?: Record<string, any>) => {
   return zAI.chat(message, context);
 };
-
-// Export zAI as a named export (some code imports it this way)
-export const zAI = zAI;
