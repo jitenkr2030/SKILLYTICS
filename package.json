@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:seed": "bun scripts/seed-data.ts && bun scripts/seed-certificates.ts"
+    "db:seed": "bun scripts/seed-data.ts && bun scripts/seed-certificates.ts",
+    "postinstall": "node scripts/remove-sdk.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
